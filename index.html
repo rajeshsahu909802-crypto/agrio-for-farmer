@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Agrio - Smart Agricultural Procurement & Live Queue Platform</title>
+  <meta name="description" content="Intelligent crop procurement, dynamic queue management, automated farmer SMS alerts, digital assaying, and DBT payment tracking. Works on all devices including keypad phones via SMS.">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- QR Code Generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- TOP NAVIGATION BAR -->
+    <header class="app-header">
+      <div class="header-left-group">
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle navigation menu">
+          <i data-lucide="menu"></i>
+        </button>
+        <div class="header-brand">
+          <div class="brand-logo">
+            <i data-lucide="sprout" class="brand-icon"></i>
+          </div>
+          <div class="brand-text">
+            <div class="brand-title-wrap">
+              <span class="brand-name">Agrio</span>
+              <span class="brand-badge" data-i18n="brand.badge">Gov-Direct v2.4</span>
+            </div>
+            <span class="brand-subtitle" data-i18n="brand.subtitle">Smart Procurement & Real-Time Queue System</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER SELECTOR & TIME -->
+      <div class="header-center-info">
+        <div class="center-selector-box">
+          <i data-lucide="map-pin" class="header-icon"></i>
+          <div class="center-select-wrapper">
+            <label for="mandi-select" data-i18n="header.hub">Procurement Hub:</label>
+            <select id="mandi-select" class="clean-select">
+              <option value="karnal">Karnal Central Mandi (Haryana)</option>
+              <option value="nashik">Nashik Agri Terminal (Maharashtra)</option>
+              <option value="warangal">Warangal Grain Depot (Telangana)</option>
+            </select>
+          </div>
+        </div>
+        <div class="live-status-pill" id="center-congestion-badge">
+          <span class="pulse-dot"></span>
+          <span id="congestion-text">Normal Flow (12m avg wait)</span>
+        </div>
+      </div>
+
+      <!-- ROLE NAVIGATION SWITCHER (Desktop) -->
+      <nav class="role-nav" id="desktop-nav">
+        <button class="role-btn active" data-role="farmer" id="nav-farmer" aria-label="Farmer Portal">
+          <i data-lucide="user-check"></i>
+          <span data-i18n="nav.farmer">Farmer Portal</span>
+        </button>
+        <button class="role-btn" data-role="queue" id="nav-queue" aria-label="Live Queue">
+          <i data-lucide="monitor"></i>
+          <span data-i18n="nav.queue">Live Queue & Gate</span>
+        </button>
+        <button class="role-btn" data-role="weighbridge" id="nav-weighbridge" aria-label="Assayer Weighbridge">
+          <i data-lucide="scale"></i>
+          <span data-i18n="nav.weighbridge">Assayer & Weighbridge</span>
+        </button>
+        <button class="role-btn" data-role="admin" id="nav-admin" aria-label="Admin Hub">
+          <i data-lucide="shield-check"></i>
+          <span data-i18n="nav.admin">Admin & DBT Hub</span>
+        </button>
+        <button class="role-btn" data-role="sms" id="nav-sms" aria-label="SMS Gateway">
+          <i data-lucide="message-square-text"></i>
+          <span data-i18n="nav.sms">SMS Gateway</span>
+        </button>
+      </nav>
+
+      <!-- LANGUAGE SELECTOR, SIMULATION & NOTIFICATION -->
+      <div class="header-actions">
+        <!-- Language Selector -->
+        <div class="lang-selector-wrap">
+          <button class="btn btn-outline-lang btn-sm" id="lang-toggle-btn" aria-label="Change language">
+            <i data-lucide="globe"></i>
+            <span id="current-lang-display">English</span>
+            <i data-lucide="chevron-down" class="lang-chevron"></i>
+          </button>
+          <div class="lang-dropdown" id="lang-dropdown">
+            <div class="lang-dropdown-header">
+              <i data-lucide="languages"></i>
+              <span>Select Language / भाषा चुनें</span>
+            </div>
+            <div class="lang-options-grid" id="lang-options-grid">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary btn-sm hide-mobile" id="btn-auto-simulate" title="Run simulated day cycle">
+          <i data-lucide="play-circle"></i>
+          <span id="simulate-btn-text" data-i18n="header.simulate">Auto-Simulate Flow</span>
+        </button>
+        <button class="btn-icon notification-toggle-btn" id="toggle-phone-btn" title="Simulated SMS/WhatsApp Alerts" aria-label="SMS WhatsApp Alerts">
+          <i data-lucide="smartphone"></i>
+          <span class="notif-counter" id="unread-sms-count">3</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- MOBILE OVERLAY NAV -->
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay">
+      <div class="mobile-nav-panel">
+        <div class="mobile-nav-header">
+          <span class="brand-name">Agrio</span>
+          <button class="btn-icon-xs" id="close-mobile-nav" aria-label="Close menu"><i data-lucide="x"></i></button>
+        </div>
+        <nav class="mobile-nav-list">
+          <button class="mobile-nav-item active" data-role="farmer">
+            <i data-lucide="user-check"></i>
+            <span data-i18n="nav.farmer">Farmer Portal</span>
+          </button>
+          <button class="mobile-nav-item" data-role="queue">
+            <i data-lucide="monitor"></i>
+            <span data-i18n="nav.queue">Live Queue & Gate</span>
+          </button>
+          <button class="mobile-nav-item" data-role="weighbridge">
+            <i data-lucide="scale"></i>
+            <span data-i18n="nav.weighbridge">Assayer & Weighbridge</span>
+          </button>
+          <button class="mobile-nav-item" data-role="admin">
+            <i data-lucide="shield-check"></i>
+            <span data-i18n="nav.admin">Admin & DBT Hub</span>
+          </button>
+          <button class="mobile-nav-item" data-role="sms">
+            <i data-lucide="message-square-text"></i>
+            <span data-i18n="nav.sms">SMS Gateway</span>
+          </button>
+        </nav>
+        <div class="mobile-nav-footer">
+          <button class="btn btn-secondary btn-sm btn-block" id="btn-auto-simulate-mobile">
+            <i data-lucide="play-circle"></i>
+            <span data-i18n="header.simulate">Auto-Simulate Flow</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <main class="main-viewport">
+      
+      <!-- ============================================== -->
+      <!-- 1. FARMER PORTAL VIEW -->
+      <!-- ============================================== -->
+      <section class="view-panel active" id="view-farmer">
+        <!-- Farmer Sub-navigation Tabs -->
+        <div class="sub-tab-bar">
+          <div class="farmer-profile-card">
+            <div class="avatar-circle">
+              <i data-lucide="user"></i>
+            </div>
+            <div class="profile-meta">
+              <div class="farmer-selector-row">
+                <select id="active-farmer-select" class="profile-select">
+                  <option value="FARM-001">Sardar Gurpreet Singh (ID: PB-8821) - 12 Acres</option>
+                  <option value="FARM-002">Rameshwar Patil (ID: MH-4019) - 8.5 Acres</option>
+                  <option value="FARM-003">Lakshmi Narayana (ID: TS-1104) - 6 Acres</option>
+                </select>
+                <span class="verified-badge"><i data-lucide="badge-check"></i> <span data-i18n="farmer.verified">Land & Aadhaar Verified</span></span>
+              </div>
+              <div class="profile-details-row">
+                <span><i data-lucide="phone"></i> +91 98765-43210</span>
+                <span><i data-lucide="landmark"></i> SBI A/C: •••• 8842 (Aadhaar Seeded)</span>
+                <span><i data-lucide="credit-card"></i> PM-KISAN ID: Verified</span>
+              </div>
+            </div>
+          </div>
+          <div class="farmer-action-tabs">
+            <button class="sub-tab-btn active" data-tab="farmer-book">
+              <i data-lucide="calendar-plus"></i> <span data-i18n="farmer.tab.book">Book Slot & E-Pass</span>
+            </button>
+            <button class="sub-tab-btn" data-tab="farmer-active-pass">
+              <i data-lucide="ticket"></i> <span data-i18n="farmer.tab.pass">My Digital Gate Pass</span>
+            </button>
+            <button class="sub-tab-btn" data-tab="farmer-track">
+              <i data-lucide="activity"></i> <span data-i18n="farmer.tab.track">Track Procurement & DBT</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- FARMER TAB CONTENT -->
+        <div class="farmer-content-area">
+          
+          <!-- TAB A: BOOK SLOT -->
+          <div class="farmer-sub-panel active" id="tab-farmer-book">
+            <div class="grid-2col">
+              <!-- Booking Form -->
+              <div class="card form-card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <i data-lucide="calendar-check" class="card-icon"></i>
+                    <div>
+                      <h3 data-i18n="farmer.book.title">Reserve Procurement Slot</h3>
+                      <p data-i18n="farmer.book.subtitle">Book guaranteed unloading time. Avoid waiting in highway queues.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <form id="slot-booking-form" class="flow-form">
+                  <div class="form-row grid-2">
+                    <div class="form-group">
+                      <label for="crop-type" data-i18n="farmer.crop.label">Crop Variety & Grade</label>
+                      <select id="crop-type" class="form-control" required>
+                        <option value="Wheat - Sharbati (Grade A)" data-msp="2275">Wheat - Sharbati (Grade A) - MSP ₹2,275/Qtl</option>
+                        <option value="Paddy - Basmati 1509" data-msp="2300">Paddy - Basmati 1509 - MSP ₹2,300/Qtl</option>
+                        <option value="Mustard / Rapeseed" data-msp="5650">Mustard / Rapeseed - MSP ₹5,650/Qtl</option>
+                        <option value="Cotton (Medium Staple)" data-msp="6620">Cotton (Medium Staple) - MSP ₹6,620/Qtl</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="est-quantity" data-i18n="farmer.qty.label">Estimated Quantity (Quintals)</label>
+                      <div class="input-with-suffix">
+                        <input type="number" id="est-quantity" class="form-control" min="10" max="250" value="45" required>
+                        <span class="suffix">Qtls</span>
+                      </div>
+                      <small class="helper-text"><span data-i18n="farmer.quota.remaining">Land quota remaining:</span> 180 Qtls</small>
+                    </div>
+                  </div>
+
+                  <div class="form-row grid-2">
+                    <div class="form-group">
+                      <label for="vehicle-type" data-i18n="farmer.vehicle.label">Transport Vehicle</label>
+                      <select id="vehicle-type" class="form-control" required>
+                        <option value="Tractor Trolley (Single Axle)">Tractor Trolley (Single Axle)</option>
+                        <option value="Tractor Trolley (Double Axle)">Tractor Trolley (Double Axle)</option>
+                        <option value="Mini Truck / Pickup (Tata 407/Bolero)">Mini Truck (Tata 407 / Pickup)</option>
+                        <option value="Heavy Commercial Truck">Heavy Commercial Truck (10-Wheeler)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="vehicle-number" data-i18n="farmer.vehicle.number">Vehicle Registration Number</label>
+                      <input type="text" id="vehicle-number" class="form-control uppercase" placeholder="HR-05-AB-7749" value="HR-05-AB-7749" required>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label data-i18n="farmer.date.label">Select Preferred Date</label>
+                    <div class="date-picker-row" id="date-picker-options">
+                      <!-- Dynamically rendered 5 upcoming dates -->
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label data-i18n="farmer.slots.label">Available Capacity Windows (Real-Time Quota)</label>
+                    <div class="slots-grid" id="slots-time-container">
+                      <!-- Dynamically rendered slots with capacity meters -->
+                    </div>
+                  </div>
+
+                  <div class="booking-summary-box">
+                    <div class="summary-item">
+                      <span data-i18n="farmer.est.value">Estimated Value @ MSP</span>
+                      <strong id="estimated-payout-val">₹ 1,02,375</strong>
+                    </div>
+                    <div class="summary-item">
+                      <span data-i18n="farmer.turnaround">Max Center Turnaround SLA</span>
+                      <strong><i data-lucide="clock" class="inline-icon"></i> 45 <span data-i18n="common.minutes">Minutes</span></strong>
+                    </div>
+                    <div class="summary-item">
+                      <span data-i18n="farmer.sms.alerts">SMS Alerts</span>
+                      <strong class="text-success"><i data-lucide="check-circle" class="inline-icon"></i> <span data-i18n="farmer.sms.enabled">Enabled</span></strong>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary btn-lg btn-block" id="btn-confirm-booking">
+                    <i data-lucide="sparkles"></i>
+                    <span data-i18n="farmer.confirm.btn">Confirm & Generate Digital Gate Pass</span>
+                  </button>
+                </form>
+              </div>
+
+              <!-- Real-time Center Capacity & Benefits -->
+              <div class="sidebar-cards">
+                <div class="card info-card gradient-card">
+                  <div class="card-header">
+                    <div class="card-title">
+                      <i data-lucide="zap" class="card-icon text-accent"></i>
+                      <h4 data-i18n="prebook.title">Why Pre-Book with Agrio?</h4>
+                    </div>
+                  </div>
+                  <ul class="benefits-list">
+                    <li>
+                      <div class="bullet-icon"><i data-lucide="check"></i></div>
+                      <div>
+                        <strong data-i18n="prebook.zero.title">Zero Highway Stagnation</strong>
+                        <p data-i18n="prebook.zero.desc">Express gate entry through designated RFID / QR scanner lane.</p>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="bullet-icon"><i data-lucide="check"></i></div>
+                      <div>
+                        <strong data-i18n="prebook.moisture.title">Live Moisture Pre-Check</strong>
+                        <p data-i18n="prebook.moisture.desc">Assaying results linked straight to your mobile pass.</p>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="bullet-icon"><i data-lucide="check"></i></div>
+                      <div>
+                        <strong data-i18n="prebook.dbt.title">48h Guaranteed DBT Payout</strong>
+                        <p data-i18n="prebook.dbt.desc">Instant e-J-Form generation and direct treasury bank transfer.</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="card center-stats-card">
+                  <div class="card-header">
+                    <h4 data-i18n="stats.title">Center Live Operations</h4>
+                    <span class="live-dot-label"><span class="pulse-dot green"></span> <span data-i18n="stats.live">Live</span></span>
+                  </div>
+                  <div class="stats-mini-grid">
+                    <div class="stat-mini">
+                      <span class="label" data-i18n="stats.weighbridges">Weighbridges Active</span>
+                      <span class="value" id="active-weighbridges-count">4 / 4 Stations</span>
+                    </div>
+                    <div class="stat-mini">
+                      <span class="label" data-i18n="stats.today">Today's Procurement</span>
+                      <span class="value text-success" id="today-procured-tons">840 Quintals</span>
+                    </div>
+                    <div class="stat-mini">
+                      <span class="label" data-i18n="stats.speed">Avg Process Speed</span>
+                      <span class="value">14 Mins / Tractor</span>
+                    </div>
+                    <div class="stat-mini">
+                      <span class="label" data-i18n="stats.vehicles">Vehicles in Campus</span>
+                      <span class="value" id="campus-vehicles-count">9 Vehicles</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB B: DIGITAL GATE PASS (E-PASS) -->
+          <div class="farmer-sub-panel" id="tab-farmer-active-pass">
+            <div class="gatepass-wrapper" id="gatepass-container">
+              <!-- Pass rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- TAB C: TRACK PROCUREMENT & DBT -->
+          <div class="farmer-sub-panel" id="tab-farmer-track">
+            <div class="card tracking-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-lucide="git-commit" class="card-icon"></i>
+                  <div>
+                    <h3 data-i18n="track.title">Live Procurement & Payment Journey</h3>
+                    <p data-i18n="track.subtitle">Real-time lifecycle tracking from mandi arrival to bank credit</p>
+                  </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="btn-refresh-status">
+                  <i data-lucide="refresh-cw"></i> <span data-i18n="track.refresh">Refresh Status</span>
+                </button>
+              </div>
+
+              <!-- Journey Timeline -->
+              <div class="timeline-container" id="farmer-timeline-container">
+                <!-- Dynamically rendered timeline nodes -->
+              </div>
+
+              <!-- Transaction Slip Preview -->
+              <div class="procurement-receipt-box" id="procurement-receipt-box">
+                <!-- Receipt details if weighment done -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 2. LIVE QUEUE & GATE OPERATOR DISPLAY VIEW -->
+      <!-- ============================================== -->
+      <section class="view-panel" id="view-queue">
+        <div class="queue-layout">
+          
+          <!-- LEFT / TOP: PUBLIC DISPLAY BOARD (LED TV STYLE) -->
+          <div class="card led-board-card">
+            <div class="led-board-header">
+              <div class="led-title-box">
+                <div class="led-blinker"></div>
+                <h2 data-i18n="led.title">MANDI LIVE TOKEN CALLING BOARD</h2>
+              </div>
+              <div class="led-stats-strip">
+                <span><i data-lucide="clock"></i> <span data-i18n="led.time">Current Time:</span> <strong id="led-live-clock">10:45 AM</strong></span>
+                <span><i data-lucide="truck"></i> <span data-i18n="led.vehicles">Vehicles in Line:</span> <strong id="led-queue-count">4</strong></span>
+                <span><i data-lucide="hourglass"></i> <span data-i18n="led.wait">Est. Wait for Next:</span> <strong id="led-est-wait">8 mins</strong></span>
+              </div>
+            </div>
+
+            <!-- Big Token Calling Grid -->
+            <div class="calling-grid">
+              <div class="calling-box calling-primary">
+                <span class="calling-label" data-i18n="led.now">NOW ENTERING GATE</span>
+                <div class="token-jumbo" id="led-now-calling">TOK-102</div>
+                <div class="calling-sub" id="led-calling-vehicle">Tractor HR-05-AB-7749</div>
+                <div class="calling-lane">Assigned: <span id="led-calling-lane">Lane 1 (Grain Assaying)</span></div>
+              </div>
+              <div class="calling-box calling-secondary">
+                <span class="calling-label" data-i18n="led.weighbridge">AT WEIGHBRIDGE #1</span>
+                <div class="token-jumbo text-accent" id="led-at-weighbridge">TOK-101</div>
+                <div class="calling-sub" id="led-weighbridge-farmer">Rameshwar Patil (Wheat)</div>
+                <div class="calling-lane">Status: Gross Weighment</div>
+              </div>
+              <div class="calling-box calling-tertiary">
+                <span class="calling-label" data-i18n="led.next">NEXT 3 TOKENS (GET READY)</span>
+                <div class="upcoming-tokens-list" id="led-upcoming-tokens">
+                  <!-- Tokens injected dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BOTTOM / RIGHT: GATE OPERATOR CONTROL DESK -->
+          <div class="grid-2col gate-operator-grid">
+            
+            <!-- Quick Gate Check-in & Scanner Simulator -->
+            <div class="card operator-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-lucide="scan-line" class="card-icon"></i>
+                  <div>
+                    <h3 data-i18n="gate.title">Gate Security & Check-In Desk</h3>
+                    <p data-i18n="gate.subtitle">Verify QR e-Pass, register arrival, and assign physical bay.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="operator-body">
+                <div class="gate-scan-input-group">
+                  <input type="text" id="manual-token-input" class="form-control" data-i18n="gate.scan.placeholder" placeholder="Scan QR or Enter Token (e.g., TOK-104)">
+                  <button class="btn btn-primary" id="btn-gate-checkin">
+                    <i data-lucide="check"></i> <span data-i18n="gate.checkin">Check In</span>
+                  </button>
+                </div>
+
+                <div class="quick-token-buttons">
+                  <span class="helper-text" data-i18n="gate.ready">Ready for Gate Entry:</span>
+                  <div class="pill-buttons-row" id="ready-tokens-pills">
+                    <!-- Quick action tokens -->
+                  </div>
+                </div>
+
+                <div class="lane-allocation-box">
+                  <h4 data-i18n="gate.lanes.title">Lane Allocation & Campus Traffic</h4>
+                  <div class="lanes-status-row">
+                    <div class="lane-indicator active">
+                      <span class="lane-name">Lane 1: Wheat / Mustard</span>
+                      <span class="lane-queue-badge">3 Vehicles Queued</span>
+                    </div>
+                    <div class="lane-indicator">
+                      <span class="lane-name">Lane 2: Paddy / Basmati</span>
+                      <span class="lane-queue-badge">1 Vehicle Queued</span>
+                    </div>
+                    <div class="lane-indicator">
+                      <span class="lane-name">Lane 3: Fast-Track (&lt;20 Qtl)</span>
+                      <span class="lane-queue-badge">Clear</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Mandi Queue Table -->
+            <div class="card queue-table-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-lucide="list-ordered" class="card-icon"></i>
+                  <div>
+                    <h3 data-i18n="queue.title">Active Campus Queue</h3>
+                    <p data-i18n="queue.subtitle">Live progress of all vehicles currently inside or queued</p>
+                  </div>
+                </div>
+                <span class="badge badge-outline" id="active-queue-count-badge">5 Active</span>
+              </div>
+
+              <div class="table-responsive">
+                <table class="data-table" id="queue-master-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="table.token">Token</th>
+                      <th data-i18n="table.farmer">Farmer</th>
+                      <th data-i18n="table.crop.qty">Crop & Qty</th>
+                      <th data-i18n="table.slot">Slot Window</th>
+                      <th data-i18n="table.stage">Stage</th>
+                      <th data-i18n="table.action">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="queue-table-body">
+                    <!-- Table rows dynamically populated -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 3. ASSAYER & WEIGHBRIDGE TERMINAL VIEW -->
+      <!-- ============================================== -->
+      <section class="view-panel" id="view-weighbridge">
+        <div class="grid-2col weighbridge-grid">
+          
+          <!-- Quality Assaying Terminal -->
+          <div class="card terminal-card">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-lucide="test-tube-2" class="card-icon"></i>
+                <div>
+                  <h3 data-i18n="assay.title">Digital Assaying & Quality Grading</h3>
+                  <p data-i18n="assay.subtitle">Quality inspection parameters before weighment clearance</p>
+                </div>
+              </div>
+            </div>
+
+            <form id="assaying-form" class="flow-form">
+              <div class="form-group">
+                <label for="assayer-token-select" data-i18n="assay.token">Select Inspected Token</label>
+                <select id="assayer-token-select" class="form-control" required>
+                  <!-- Populated dynamically with checked-in tokens -->
+                </select>
+              </div>
+
+              <div class="assayer-meta-preview" id="assayer-farmer-summary">
+                <!-- Farmer preview data -->
+              </div>
+
+              <div class="form-row grid-2">
+                <div class="form-group">
+                  <label for="moisture-slider"><span data-i18n="assay.moisture">Moisture Content (%):</span> <strong id="moisture-val-display" class="text-accent">11.4%</strong></label>
+                  <input type="range" id="moisture-slider" class="form-range" min="8" max="18" step="0.1" value="11.4">
+                  <small class="helper-text">Standard FAQ Permissible: &le; 12.0%</small>
+                </div>
+                <div class="form-group">
+                  <label for="foreign-matter" data-i18n="assay.foreign">Foreign Matter / Impurities (%)</label>
+                  <input type="number" id="foreign-matter" class="form-control" min="0" max="5" step="0.1" value="0.8">
+                  <small class="helper-text">Permissible Limit: &le; 1.0%</small>
+                </div>
+              </div>
+
+              <div class="form-row grid-2">
+                <div class="form-group">
+                  <label for="grade-select" data-i18n="assay.grade">Quality Grade Assigned</label>
+                  <select id="grade-select" class="form-control">
+                    <option value="Grade-A (FAQ Standard)" selected>Grade-A (FAQ Standard - Full MSP)</option>
+                    <option value="Grade-B (Minor Refraction)">Grade-B (Minor Refraction - 1% deduction)</option>
+                    <option value="Under Assaying">Under Assaying</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="assayer-officer" data-i18n="assay.officer">Assayer Officer ID</label>
+                  <input type="text" id="assayer-officer" class="form-control" value="QA-OFFICER-449" readonly>
+                </div>
+              </div>
+
+              <div class="assaying-status-banner" id="assaying-result-banner">
+                <i data-lucide="check-circle" class="text-success"></i>
+                <div>
+                  <strong data-i18n="assay.passed">Quality Parameters Passed (FAQ Standards Met)</strong>
+                  <p data-i18n="assay.eligible">Eligible for official procurement at 100% Minimum Support Price.</p>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block" id="btn-submit-assay">
+                <i data-lucide="check-check"></i> <span data-i18n="assay.approve">Approve & Transmit to Weighbridge</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- IoT Weighbridge & Procurement Invoicing -->
+          <div class="card terminal-card">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-lucide="scale" class="card-icon"></i>
+                <div>
+                  <h3 data-i18n="weigh.title">IoT Weighbridge & E-Receipt (J-Form)</h3>
+                  <p data-i18n="weigh.subtitle">Tamper-proof gross & tare weighment integration</p>
+                </div>
+              </div>
+            </div>
+
+            <form id="weighbridge-form" class="flow-form">
+              <div class="form-group">
+                <label for="weigh-token-select" data-i18n="weigh.active">Active Vehicle on Weighbridge</label>
+                <select id="weigh-token-select" class="form-control" required>
+                  <!-- Populated dynamically with assayed tokens -->
+                </select>
+              </div>
+
+              <div class="weighbridge-iot-display">
+                <div class="iot-indicator-top">
+                  <span><i data-lucide="radio" class="pulse-icon"></i> <span data-i18n="weigh.iot">IoT Scale Link:</span> <strong class="text-success" data-i18n="weigh.connected">Connected (Scale #02)</strong></span>
+                  <span class="iot-tag" data-i18n="weigh.sensor">Live Sensor Stream</span>
+                </div>
+                <div class="iot-weight-meter">
+                  <span class="weight-number" id="live-scale-weight">7,420</span>
+                  <span class="weight-unit">KG</span>
+                </div>
+                <div class="iot-scale-buttons">
+                  <button type="button" class="btn btn-sm btn-outline" id="btn-lock-gross">
+                    <i data-lucide="lock"></i> <span data-i18n="weigh.gross.btn">Capture Gross Weight</span>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline" id="btn-lock-tare">
+                    <i data-lucide="truck"></i> <span data-i18n="weigh.tare.btn">Capture Tare (Empty)</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-row grid-3">
+                <div class="form-group">
+                  <label for="gross-weight" data-i18n="weigh.gross">Gross Weight (Kg)</label>
+                  <input type="number" id="gross-weight" class="form-control" value="7420" required>
+                </div>
+                <div class="form-group">
+                  <label for="tare-weight" data-i18n="weigh.tare">Tare Weight (Kg)</label>
+                  <input type="number" id="tare-weight" class="form-control" value="2920" required>
+                </div>
+                <div class="form-group">
+                  <label for="net-weight" data-i18n="weigh.net">Net Weight (Kg)</label>
+                  <input type="number" id="net-weight" class="form-control font-bold" value="4500" readonly>
+                </div>
+              </div>
+
+              <div class="weight-calculation-summary">
+                <div class="calc-row">
+                  <span data-i18n="weigh.quintals">Net Quantity in Quintals:</span>
+                  <strong id="calc-net-quintals">45.00 Qtls</strong>
+                </div>
+                <div class="calc-row">
+                  <span data-i18n="weigh.msp.rate">MSP Rate / Quintal:</span>
+                  <strong id="calc-msp-rate">₹ 2,275.00</strong>
+                </div>
+                <div class="calc-row total-highlight">
+                  <span data-i18n="weigh.total">Total Payable Amount:</span>
+                  <strong id="calc-total-payable" class="text-accent">₹ 1,02,375.00</strong>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-success btn-block btn-lg" id="btn-generate-jform">
+                <i data-lucide="file-text"></i> <span data-i18n="weigh.submit">Lock Weights & Issue Digital J-Form</span>
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 4. ADMIN & DBT PAYMENT HUB VIEW -->
+      <!-- ============================================== -->
+      <section class="view-panel" id="view-admin">
+        <div class="admin-dashboard-layout">
+          
+          <!-- KPI Metrics Row -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-icon-box bg-emerald">
+                <i data-lucide="boxes"></i>
+              </div>
+              <div class="kpi-details">
+                <span class="kpi-label" data-i18n="admin.kpi.procured">Season Total Procured</span>
+                <h3 class="kpi-val" id="kpi-total-procured">4,820 Qtls</h3>
+                <span class="kpi-trend positive"><i data-lucide="trending-up"></i> +14% vs Last Year</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-box bg-blue">
+                <i data-lucide="indian-rupee"></i>
+              </div>
+              <div class="kpi-details">
+                <span class="kpi-label" data-i18n="admin.kpi.disbursed">DBT Disbursed to Farmers</span>
+                <h3 class="kpi-val text-accent" id="kpi-total-disbursed">₹ 1.09 Cr</h3>
+                <span class="kpi-trend positive"><i data-lucide="check-check"></i> 100% Direct to Bank</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-box bg-amber">
+                <i data-lucide="timer"></i>
+              </div>
+              <div class="kpi-details">
+                <span class="kpi-label" data-i18n="admin.kpi.tat">Avg Mandi Turnaround</span>
+                <h3 class="kpi-val" id="kpi-avg-tat">28 Mins</h3>
+                <span class="kpi-trend positive"><i data-lucide="arrow-down"></i> -65% Wait Reduction</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-box bg-purple">
+                <i data-lucide="users"></i>
+              </div>
+              <div class="kpi-details">
+                <span class="kpi-label" data-i18n="admin.kpi.farmers">Registered Farmers Served</span>
+                <h3 class="kpi-val" id="kpi-farmers-count">342 Farmers</h3>
+                <span class="kpi-trend positive"><i data-lucide="shield-check"></i> 0 Middlemen</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="grid-2col admin-charts-grid">
+            <div class="card chart-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-lucide="bar-chart-3" class="card-icon"></i>
+                  <h4 data-i18n="admin.chart.hourly">Hourly Procurement vs Slot Capacity</h4>
+                </div>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="procurementChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card chart-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-lucide="pie-chart" class="card-icon"></i>
+                  <h4 data-i18n="admin.chart.crop">Procurement by Crop Variety</h4>
+                </div>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="cropDistributionChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- DBT Payment Batch Reconciliation Table -->
+          <div class="card dbt-table-card">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-lucide="send" class="card-icon"></i>
+                <div>
+                  <h3 data-i18n="admin.dbt.title">Direct Benefit Transfer (DBT) Payment Switch</h3>
+                  <p data-i18n="admin.dbt.subtitle">PFMS / NPCI Aadhaar Payment Bridge reconciliation queue</p>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btn-bulk-dbt-release">
+                <i data-lucide="zap"></i> <span data-i18n="admin.dbt.release">Release Pending DBT Payouts</span>
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table" id="dbt-transactions-table">
+                <thead>
+                  <tr>
+                    <th>Invoice / J-Form</th>
+                    <th>Farmer Name</th>
+                    <th>Bank & Aadhaar Status</th>
+                    <th>Crop & Net Weight</th>
+                    <th>Payable Amount</th>
+                    <th>Payment Status</th>
+                    <th>UTR / Ref Number</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dbt-table-body">
+                  <!-- Injected dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 5. SMS COMMAND GATEWAY VIEW -->
+      <!-- ============================================== -->
+      <section class="view-panel" id="view-sms">
+        <div class="sms-gateway-layout">
+          
+          <!-- LEFT: Instructions & Command Reference -->
+          <div class="card sms-info-card">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-lucide="smartphone" class="card-icon"></i>
+                <div>
+                  <h3 data-i18n="sms.howto.title">How to Use SMS Commands</h3>
+                  <p data-i18n="sms.howto.desc">Send these commands via SMS to the number displayed. Works on any basic phone!</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="sms-number-display">
+              <i data-lucide="phone-call"></i>
+              <div>
+                <span class="sms-number-label">Toll-Free SMS Number</span>
+                <strong class="sms-number-value">+91-1800-AGRI-GOV</strong>
+                <span class="sms-number-sub">(1800-2474-468)</span>
+              </div>
+            </div>
+
+            <div class="sms-commands-list">
+              <div class="sms-cmd-item">
+                <code class="sms-cmd-code">BOOK WHEAT 50</code>
+                <span data-i18n="sms.cmd.book">Book a procurement slot</span>
+              </div>
+              <div class="sms-cmd-item">
+                <code class="sms-cmd-code">STATUS TOK-102</code>
+                <span data-i18n="sms.cmd.status">Check token status</span>
+              </div>
+              <div class="sms-cmd-item">
+                <code class="sms-cmd-code">QUEUE</code>
+                <span data-i18n="sms.cmd.queue">View queue position</span>
+              </div>
+              <div class="sms-cmd-item">
+                <code class="sms-cmd-code">MSP</code>
+                <span data-i18n="sms.cmd.msp">Today's MSP rates</span>
+              </div>
+              <div class="sms-cmd-item">
+                <code class="sms-cmd-code">CANCEL TOK-102</code>
+                <span data-i18n="sms.cmd.cancel">Cancel booking</span>
+              </div>
+              <div class="sms-cmd-item">
+                <code class="sms-cmd-code">LANG HI</code>
+                <span data-i18n="sms.cmd.lang">Change language</span>
+              </div>
+              <div class="sms-cmd-item">
+                <code class="sms-cmd-code">HELP</code>
+                <span data-i18n="sms.cmd.help">List all commands</span>
+              </div>
+            </div>
+
+            <div class="sms-lang-note">
+              <i data-lucide="globe"></i>
+              <p>Commands also work in Hindi, Punjabi, Marathi & more!<br>
+              Example: <code>बुक गेहूं 50</code> or <code>ਬੁੱਕ WHEAT 50</code></p>
+            </div>
+          </div>
+
+          <!-- RIGHT: SMS Simulator (Keypad Phone Mockup) -->
+          <div class="sms-simulator-wrapper">
+            <div class="card sms-sim-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-lucide="message-square-text" class="card-icon"></i>
+                  <div>
+                    <h3 data-i18n="sms.sim.title">SMS Simulator</h3>
+                    <p data-i18n="sms.sim.desc">Test SMS commands below — simulates what a keypad phone user would experience</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Keypad Phone Screen Mockup -->
+              <div class="keypad-phone-mockup">
+                <div class="keypad-phone-screen">
+                  <div class="keypad-phone-statusbar">
+                    <span>AGRI-GOV</span>
+                    <span>SMS</span>
+                  </div>
+                  <div class="sms-chat-feed" id="sms-chat-feed">
+                    <!-- Messages rendered dynamically -->
+                  </div>
+                </div>
+                <div class="sms-input-area">
+                  <input type="text" id="sms-command-input" class="sms-text-input" data-i18n="sms.input.placeholder" placeholder="Type SMS command here...">
+                  <button class="btn btn-primary sms-send-btn" id="btn-sms-send">
+                    <i data-lucide="send"></i>
+                    <span data-i18n="sms.send">Send</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick SMS Command Buttons -->
+              <div class="sms-quick-section">
+                <span class="helper-text" data-i18n="sms.quickcmds">Quick Commands:</span>
+                <div class="sms-quick-btns" id="sms-quick-commands">
+                  <button class="sms-quick-btn" data-cmd="HELP">❓ HELP</button>
+                  <button class="sms-quick-btn" data-cmd="MSP">💰 MSP</button>
+                  <button class="sms-quick-btn" data-cmd="QUEUE">📍 QUEUE</button>
+                  <button class="sms-quick-btn" data-cmd="BOOK WHEAT 50">📋 BOOK WHEAT 50</button>
+                  <button class="sms-quick-btn" data-cmd="STATUS TOK-102">📊 STATUS TOK-102</button>
+                  <button class="sms-quick-btn" data-cmd="LANG HI">🌐 LANG HI</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ============================================== -->
+    <!-- SIMULATED MOBILE PHONE NOTIFICATION DRAWER -->
+    <!-- ============================================== -->
+    <div class="phone-drawer-container" id="phone-drawer">
+      <div class="phone-mockup">
+        <!-- Phone Notch / Status Bar -->
+        <div class="phone-status-bar">
+          <span class="phone-time" id="phone-clock">10:45</span>
+          <div class="phone-notch"></div>
+          <div class="phone-icons">
+            <i data-lucide="wifi" class="phone-icon-xs"></i>
+            <i data-lucide="battery-charging" class="phone-icon-xs"></i>
+          </div>
+        </div>
+
+        <!-- Phone Header -->
+        <div class="phone-app-header">
+          <div class="phone-header-title">
+            <i data-lucide="message-square" class="text-accent"></i>
+            <span data-i18n="phone.title">AgriGov SMS & WhatsApp Alerts</span>
+          </div>
+          <button class="btn-icon-xs close-phone-btn" id="btn-close-phone" aria-label="Close notifications">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <!-- Message Filter Tabs -->
+        <div class="phone-tabs">
+          <button class="phone-tab active" data-filter="all" data-i18n="phone.tabs.all">All Alerts</button>
+          <button class="phone-tab" data-filter="sms" data-i18n="phone.tabs.sms">SMS</button>
+          <button class="phone-tab" data-filter="whatsapp" data-i18n="phone.tabs.whatsapp">WhatsApp</button>
+        </div>
+
+        <!-- Messages Feed -->
+        <div class="phone-messages-feed" id="phone-messages-feed">
+          <!-- Messages rendered dynamically -->
+        </div>
+
+        <!-- Phone Footer -->
+        <div class="phone-footer-hint">
+          <i data-lucide="bell-ring" class="inline-icon"></i> <span data-i18n="phone.footer">Real-time multi-stage trigger notifications</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST CONTAINER FOR NOTIFICATIONS -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- J-FORM MODAL PREVIEW -->
+    <div class="modal-backdrop" id="jform-modal">
+      <div class="modal-card jform-modal-card">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i data-lucide="receipt" class="card-icon"></i>
+            <h3>Digital Procurement Receipt (Form J / E-Mandi Slip)</h3>
+          </div>
+          <button class="btn-icon-xs" id="btn-close-jform-modal" aria-label="Close modal"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body" id="jform-modal-body">
+          <!-- Populated dynamically -->
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btn-print-jform"><i data-lucide="printer"></i> Print Receipt</button>
+          <button class="btn btn-primary" id="btn-dismiss-jform">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM TAB BAR (Mobile Only) -->
+    <nav class="bottom-tab-bar" id="bottom-tab-bar">
+      <button class="bottom-tab active" data-role="farmer" aria-label="Farmer Portal">
+        <i data-lucide="user-check"></i>
+        <span data-i18n="nav.farmer">Farmer</span>
+      </button>
+      <button class="bottom-tab" data-role="queue" aria-label="Live Queue">
+        <i data-lucide="monitor"></i>
+        <span data-i18n="nav.queue">Queue</span>
+      </button>
+      <button class="bottom-tab" data-role="weighbridge" aria-label="Weighbridge">
+        <i data-lucide="scale"></i>
+        <span>Weigh</span>
+      </button>
+      <button class="bottom-tab" data-role="admin" aria-label="Admin Hub">
+        <i data-lucide="shield-check"></i>
+        <span>Admin</span>
+      </button>
+      <button class="bottom-tab" data-role="sms" aria-label="SMS Gateway">
+        <i data-lucide="message-square-text"></i>
+        <span>SMS</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- Application Logic Modules -->
+  <script src="js/state.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/farmer.js"></script>
+  <script src="js/queue.js"></script>
+  <script src="js/procurement.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/sms-gateway.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
